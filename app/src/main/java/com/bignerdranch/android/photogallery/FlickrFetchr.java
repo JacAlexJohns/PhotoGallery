@@ -3,6 +3,9 @@ package com.bignerdranch.android.photogallery;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,9 +13,11 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -65,9 +70,17 @@ public class FlickrFetchr {
                     .appendQueryParameter("extras", "url_s")
                     .build().toString();
             String jsonString = getUrlString(url);
-            Log.i(TAG, "Received JSON: " + jsonString);
             JSONObject jsonBody = new JSONObject(jsonString);
-            parseItems(items, jsonBody);
+            Gson gson = new GsonBuilder().create();
+            JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
+            JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
+            List<GalleryItem> listGallery = Arrays.asList(gson.fromJson(photoJsonArray.toString(),
+                    GalleryItem[].class));
+            for (GalleryItem item : listGallery) {
+                if (item.getUrl() != null) {
+                    items.add(item);
+                }
+            }
         } catch (JSONException je) {
             Log.e(TAG, "Failed to parse JSON", je);
         } catch (IOException ieo) {
@@ -76,7 +89,7 @@ public class FlickrFetchr {
         return items;
     }
 
-    private void parseItems(List<GalleryItem> items, JSONObject jsonBody)
+    /*private void parseItems(List<GalleryItem> items, JSONObject jsonBody)
     throws IOException, JSONException {
         JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
         JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
@@ -95,5 +108,5 @@ public class FlickrFetchr {
             item.setUrl(photoJsonObject.getString("url_s"));
             items.add(item);
         }
-    }
+    }*/
 }
